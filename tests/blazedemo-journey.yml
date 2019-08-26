@@ -1,20 +1,17 @@
-reporting:
-- module: console
-
-provisioning: local
-
 settings:
-  artifacts-dir: /TaurusLoadTesting/build/bzt/%Y-%m-%d_%H-%M-%S.%f
-  default-executor: jmeter
+  env:
+    BLAZEDEMO_BASE_URL: http://blazedemo.com
+    INPUT_CSV_FILE: ./data.csv
 
-services:
-- module: shellexec
-  post-process:
-  - ls ${TAURUS_ARTIFACTS_DIR}/kpi*.jtl | xargs -n 1 head -n 1 | uniq >> ${TAURUS_ARTIFACTS_DIR}/full_kpi.jtl
-  - ls ${TAURUS_ARTIFACTS_DIR}/kpi*.jtl | xargs -n 1 tail -n+2 >> ${TAURUS_ARTIFACTS_DIR}/full_kpi.jtl
-  - awk -F',' -v OFS=',' '$7 = $7 FS "failureMessage"' ${TAURUS_ARTIFACTS_DIR}/full_kpi.jtl > ${TAURUS_ARTIFACTS_DIR}/jmeter_stats.jtl
-  - find ~/.bzt -type f -name "jmeter" -exec ln -s {} . ';'
-  - ./jmeter -g ${TAURUS_ARTIFACTS_DIR}/jmeter_stats.jtl -o ${TAURUS_ARTIFACTS_DIR}/jmeterHtmlReports
+#included-configs:
+#- http://central.host/mystorage/remote.yml
+
+execution:
+- concurrency: 5
+  hold-for: 20s
+  ramp-up: 10s
+  write-xml-jtl: full # enable full logging of http request and response details as trace.jtl file. Useful for debugging in sanity, but not recommended for soak or load level testing
+  scenario: blazedemo-journey
 
 scenarios:
   blazedemo-journey:
@@ -62,4 +59,3 @@ scenarios:
       body: "flight=${flightId}&price=${price}&airline=${flightName}&fromPort=${fromPort}&toPort=${toPort}"
       headers:
         Content-Type: application/x-www-form-urlencoded
-    
